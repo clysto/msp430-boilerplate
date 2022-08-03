@@ -1,5 +1,7 @@
 # MSP430FR5969 LaunchPad 开发模板
 
+![MSP430FR5969](docs/msp-exp430fr5969-launchpad.png)
+
 > MSP430 DriverLib 版本：2.91.13.01
 
 ## 开发环境
@@ -65,21 +67,6 @@
 
 ## 调试代码
 
-
-
-启动后会在本机的55000端口启动gdb代理服务器。然后将开发版连接到电脑。
-
-```
-CPU Name             Port
---------             ----
-msp430              :55000
-
-Starting all cores
-CPU Name             Status
---------             ------
-msp430               Waiting for client
-```
-
 在代码目录中启动gdb：
 
 ```sh
@@ -87,7 +74,7 @@ make debug
 # or ./scripts/debug.sh
 ```
 
-上面的命令会首先在后台启动 gdb agent console 然后再启动 gdb，当 gdb 退出后 gdb agent console 会自动结束。
+上面的命令会首先在55000端口启动 gdb agent console 然后再启动 gdb，当 gdb 退出后 gdb agent console 会自动结束。
 
 在 gdb 中连接到 gdb 代理服务器：
 
