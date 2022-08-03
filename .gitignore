@@ -1,6 +1,8 @@
 *.o
 *.map
-*.out
+*.elf
 .vscode
 .DS_Store
 .envrc
+/build
+__pycache__

@@ -1,50 +1,62 @@
-OBJECTS=blink.o
-MAP=blink.map
-MAKEFILE=Makefile
+BUILD_DIR = build
+SOURCES   = $(wildcard src/*.c)
+OBJECTS   = $(patsubst src/%.c,build/%.o,$(SOURCES)) \
+            $(patsubst driverlib/%.c,build/driverlib/%.o,$(wildcard driverlib/*.c))
 
-ifeq ($(OS),Windows_NT)
-	ifeq ($(shell uname -o),Cygwin)
-		RM= rm -rf
-	else
-		RM= del /q
-	endif
-else
-	RM= rm -rf
-endif
-
-GCC_DIR = $(MSPGCC)/bin
-SUPPORT_FILE_DIRECTORY = $(MSPGCC)/include
+SUPPORT_FILE_DIR = $(MSP430GCC)/include
 
 DEVICE  = MSP430FR5969
-CC      = $(GCC_DIR)/msp430-elf-gcc
-GDB     = $(GCC_DIR)/msp430-elf-gdb
-OBJCOPY = $(GCC_DIR)/msp430-elf-objcopy
+CC      = $(MSP430GCC)/bin/msp430-elf-gcc
+OBJCOPY = $(MSP430GCC)/bin/msp430-elf-objcopy
 FLASHER = $(MSPFLASER)/MSP430Flasher
 MAKETXT = srec_cat
 
-CFLAGS = -I $(SUPPORT_FILE_DIRECTORY) -mmcu=$(DEVICE) -mlarge -mcode-region=either -mdata-region=lower -Og -Wall -g
-LFLAGS = -L $(SUPPORT_FILE_DIRECTORY) -Wl,-Map,$(MAP),--gc-sections 
+CFLAGS  = -I $(SUPPORT_FILE_DIR) -I driverlib -mmcu=$(DEVICE) -O0 -Wall -g
+LDFLAGS = -L $(SUPPORT_FILE_DIR) -T $(DEVICE).ld -Wl,-Map,$(BUILD_DIR)/$(DEVICE).map,--gc-sections 
 
-all: $(DEVICE).out $(DEVICE).txt 
+.PHONY: clean all upload debug
 
-$(DEVICE).out: ${OBJECTS}
-	$(CC) $(CFLAGS) $(LFLAGS) $? -o $(DEVICE).out
+all: $(BUILD_DIR)/$(DEVICE).elf $(BUILD_DIR)/$(DEVICE).txt  
 
-%.hex: %.out
+$(BUILD_DIR)/$(DEVICE).elf: $(OBJECTS)
+	@echo "链接 $^"
+	$(CC) $(LDFLAGS) $^ -o $@
+
+$(OBJECTS): | $(BUILD_DIR) $(BUILD_DIR)/driverlib
+
+$(BUILD_DIR)/%.o: src/%.c
+	@echo "编译 $<"
+	$(CC) -c $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/driverlib/%.o: driverlib/%.c
+	@echo "编译 $<"
+	$(CC) -c $(CFLAGS) -w $< -o $@
+
+$(BUILD_DIR):
+	@echo "创建构建目录"
+	mkdir $@
+
+$(BUILD_DIR)/driverlib: | $(BUILD_DIR)
+	@echo "创建 driverlib 构建目录"
+	mkdir $@
+
+%.hex: %.elf
+	@echo "生成 Intel-hex $@"
 	$(OBJCOPY) -O ihex $< $@
 
 %.txt: %.hex
+	@echo "生成 TI-txt $@"
 	$(MAKETXT) -O $@ -TITXT $< -I
 
-clean: 
-	$(RM) $(OBJECTS)
-	$(RM) $(MAP)
-	$(RM) *.out
-	$(RM) *.txt
-	$(RM) *.hex
-
-debug: all
-	$(GDB) $(DEVICE).out
+clean:
+	@echo "清理构建文件"
+	rm -rf $(BUILD_DIR)
 
 upload:
-	LD_LIBRARY_PATH=$(MSPFLASER) DYLD_LIBRARY_PATH=$(MSPFLASER) $(FLASHER) -w $(DEVICE).txt -v -g -z [VCC]
+	@echo "烧写 $(BUILD_DIR)/$(DEVICE).txt 到开发版"
+	LD_LIBRARY_PATH=$(MSPFLASER) DYLD_LIBRARY_PATH=$(MSPFLASER) $(FLASHER) \
+	-w $(BUILD_DIR)/$(DEVICE).txt -v -g -z [VCC]
+
+debug:
+	@echo "开始调试"
+	./scripts/debug.sh

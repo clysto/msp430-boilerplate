@@ -1,16 +1,22 @@
-# MSP430FR5969 开发模板
+# MSP430FR5969 LaunchPad 开发模板
+
+> MSP430 DriverLib 版本：2.91.13.01
 
 ## 开发环境
 
-1. 下载 [MSP430-GCC-OPENSOURCE](https://www.ti.com/tool/MSP430-GCC-OPENSOURCE) 编译器。注意要下载 **GCC ALL-IN-ONE INSTALLER** 而不是 GCC TOOLCHAIN ONLY 因为 GCC TOOLCHAIN ONLY 中不包含 `gdb_agent_console`。运行 installer 安装到任意位置，建议安装到 `~/.ti/msp430-gcc`。
+1. 下载 [MSP430-GCC-OPENSOURCE](https://www.ti.com/tool/MSP430-GCC-OPENSOURCE) 编译器。注意要下载 **GCC ALL-IN-ONE INSTALLER** 而不是 GCC TOOLCHAIN ONLY 因为 GCC TOOLCHAIN ONLY 中不包含 `gdb_agent_console`。运行 installer 安装到任意位置，建议安装到 `~/.local/opt/msp430-gcc`。
 
-2. 下载 [MSP430-FLASHER](https://www.ti.com/tool/MSP430-FLASHER) 命令行烧写工具。运行 installer 安装到任意位置，建议安装到 `~/.ti/MSPFlasher_1.3.20`。（根据版本号路径会不同）
+2. 下载 [MSP430-FLASHER](https://www.ti.com/tool/MSP430-FLASHER) 命令行烧写工具。运行 installer 安装到任意位置，建议安装到 `~/.local/opt/MSPFlasher_1.3.20`。（根据版本号路径会不同）
 
-3. 下载 SRecord：
-   
-   ```
-   brew install srecord
-   ```
+3. 下载 SRecord 用于生成 TI-txt 文件：
+   - MacOS 
+     ```sh
+     brew install srecord
+     ```
+   - Ubuntu / Debian
+     ```sh
+     sudo apt install srecord
+     ```
 
 ## 开始编写代码
 
@@ -18,9 +24,8 @@
 
 2. 设置环境变量：
    ```sh
-   export MSPGCC=/Users/<username>/.ti/msp430-gcc
-   export MSPFLASER=/Users/<username>/.ti/MSPFlasher_1.3.20
-   export PATH=$MSPFLASER:$MSPGCC/bin:$PATH
+   export MSP430GCC=<path-to-your-home-directory>/.local/opt/msp430-gcc
+   export MSPFLASER=<path-to-your-home-directory>/.local/opt/MSPFlasher_1.3.20
    ```
 
 3. 编译和烧写：
@@ -43,8 +48,9 @@
     {
       "name": "msp430",
       "includePath": [
-        "${workspaceFolder}/**",
-        "/Users/<username>/.ti/msp430-gcc/include"
+        "${workspaceFolder}/driverlib",
+        "<path-to-your-home-directory>/.local/opt/msp430-gcc/msp430-elf/include",
+        "<path-to-your-home-directory>/.local/opt/msp430-gcc/include"
       ],
       "defines": ["__MSP430FR5969__"]
     }
@@ -55,16 +61,11 @@
 
 配置好后 VS Code 就可以自动找到头文件目录。
 
+> 注意该配置仅仅只是让 VS Code 不会由于找不到头文件而报错，并不影响实际的编译过程。
+
 ## 调试代码
 
-首先启动 gdb agent console：
 
-```sh
-# 进入 MSP430-GCC-OPENSOURCE 安装目录
-cd msp430-gcc
-# 启动 gdb agent console
-./bin/gdb_agent_console msp430.dat
-```
 
 启动后会在本机的55000端口启动gdb代理服务器。然后将开发版连接到电脑。
 
@@ -83,7 +84,10 @@ msp430               Waiting for client
 
 ```sh
 make debug
+# or ./scripts/debug.sh
 ```
+
+上面的命令会首先在后台启动 gdb agent console 然后再启动 gdb，当 gdb 退出后 gdb agent console 会自动结束。
 
 在 gdb 中连接到 gdb 代理服务器：
 
@@ -102,3 +106,5 @@ make debug
 ```
 (gdb) continue
 ```
+
+> 连接到 gdb 代理服务器的过程可以写入 `.gdbinit` 程序，每次打开 gdb 的时候就会自动执行。
