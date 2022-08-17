@@ -8,15 +8,15 @@ SUPPORT_FILE_DIR = $(MSP430GCC)/include
 DEVICE  = MSP430FR5969
 CC      = $(MSP430GCC)/bin/msp430-elf-gcc
 OBJCOPY = $(MSP430GCC)/bin/msp430-elf-objcopy
-FLASHER = $(MSPFLASER)/MSP430Flasher
+FLASHER = $(MSPFLASHER)/MSP430Flasher
 MAKETXT = srec_cat
 
 CFLAGS  = -I $(SUPPORT_FILE_DIR) -I driverlib -mmcu=$(DEVICE) -O0 -Wall -g
-LDFLAGS = -L $(SUPPORT_FILE_DIR) -T $(DEVICE).ld -Wl,-Map,$(BUILD_DIR)/$(DEVICE).map,--gc-sections 
+LDFLAGS = -L $(SUPPORT_FILE_DIR) -T $(shell echo $(DEVICE) | tr A-Z a-z).ld -Wl,-Map,$(BUILD_DIR)/$(DEVICE).map,--gc-sections 
 
 .PHONY: clean all upload debug
 
-all: $(BUILD_DIR)/$(DEVICE).elf $(BUILD_DIR)/$(DEVICE).txt  
+all: $(BUILD_DIR)/$(DEVICE).elf $(BUILD_DIR)/$(DEVICE).txt
 
 $(BUILD_DIR)/$(DEVICE).elf: $(OBJECTS)
 	@echo "链接 $^"
@@ -54,7 +54,7 @@ clean:
 
 upload:
 	@echo "烧写 $(BUILD_DIR)/$(DEVICE).txt 到开发版"
-	LD_LIBRARY_PATH=$(MSPFLASER) DYLD_LIBRARY_PATH=$(MSPFLASER) $(FLASHER) \
+	LD_LIBRARY_PATH=$(MSPFLASHER) DYLD_LIBRARY_PATH=$(MSPFLASHER) $(FLASHER) \
 	-w $(BUILD_DIR)/$(DEVICE).txt -v -g -z [VCC]
 
 debug:
