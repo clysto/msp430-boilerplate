@@ -28,19 +28,20 @@ int main(void) {
     LED_init();
 
     GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P1, GPIO_PIN1);
-    // GPIO_selectInterruptEdge(GPIO_PORT_P1, GPIO_PIN1, GPIO_HIGH_TO_LOW_TRANSITION);
+    GPIO_selectInterruptEdge(GPIO_PORT_P1, GPIO_PIN1, GPIO_HIGH_TO_LOW_TRANSITION);
     GPIO_clearInterrupt(GPIO_PORT_P1, GPIO_PIN1);
     GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
 
     GPIO_setAsInputPinWithPullUpResistor(GPIO_PORT_P4, GPIO_PIN5);
-    // GPIO_selectInterruptEdge(GPIO_PORT_P4, GPIO_PIN5, GPIO_HIGH_TO_LOW_TRANSITION);
+    GPIO_selectInterruptEdge(GPIO_PORT_P4, GPIO_PIN5, GPIO_HIGH_TO_LOW_TRANSITION);
     GPIO_clearInterrupt(GPIO_PORT_P4, GPIO_PIN5);
     GPIO_enableInterrupt(GPIO_PORT_P4, GPIO_PIN5);
 
+    // LFX 时钟 I/O 配置
     GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_PJ, GPIO_PIN4 + GPIO_PIN5, GPIO_PRIMARY_MODULE_FUNCTION);
-    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2, GPIO_PIN0 + GPIO_PIN1, GPIO_SECONDARY_MODULE_FUNCTION);
-
-    PMM_unlockLPM5();
+    // 串口 I/O 配置
+    GPIO_setAsPeripheralModuleFunctionOutputPin(GPIO_PORT_P2, GPIO_PIN0, GPIO_SECONDARY_MODULE_FUNCTION);
+    GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P2, GPIO_PIN1, GPIO_SECONDARY_MODULE_FUNCTION);
 
     CS_setExternalClockSource(32768, 0);
     CS_initClockSignal(CS_ACLK, CS_LFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
@@ -48,19 +49,31 @@ int main(void) {
 
     UART_init();
 
-    __bis_SR_register(GIE);
+    PMM_unlockLPM5();
 
-    LED_turnOnLED1();
-    LED_turnOnLED2();
+    __bis_SR_register(GIE);
 
     char line[128];
     setbuf(stdout, NULL);
     while (true) {
-        printf("$ ");
         fgets(line, sizeof(line), stdin);
         line[strcspn(line, "\n")] = 0;
         fflush(stdin);
-        printf("you say: %s\n", line);
+        if (strcmp(line, "led1 on") == 0) {
+            LED_turnOnLED1();
+            printf("turn on led1\n");
+        } else if (strcmp(line, "led1 off") == 0) {
+            LED_turnOffLED1();
+            printf("turn off led1\n");
+        } else if (strcmp(line, "led2 on") == 0) {
+            LED_turnOnLED2();
+            printf("turn on led2\n");
+        } else if (strcmp(line, "led2 off") == 0) {
+            LED_turnOffLED2();
+            printf("turn off led2\n");
+        } else {
+            printf("you say: %s\n", line);
+        }
     }
     return 0;
 }
