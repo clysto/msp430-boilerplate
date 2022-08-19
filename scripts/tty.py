@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 
+import sys
 import serial
 import readline
 
 
+device = sys.argv[1]
+
+
 readline.clear_history()
-client = serial.Serial("/dev/tty.usbmodem141103", 9600)
+client = serial.Serial(device, 9600)
 while True:
     s = input("$ ")
     if s == "quit":
